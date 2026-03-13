@@ -1,0 +1,58 @@
+---
+slug: global-satellite-foot-traffic
+---
+
+Orbital Insight's foot traffic dataset combines satellite imagery analysis with anonymized mobile device signals to produce daily visitor estimates across 500,000+ retail locations in the US, Europe, and Asia-Pacific. The data is aggregated at the store level with no personally identifiable information.
+
+## Signal Construction
+
+Each observation includes a normalized visit count, year-over-year delta, and a confidence score indicating signal strength. The normalization adjusts for device panel composition changes, seasonal weather patterns, and public holidays to isolate true consumer behavior shifts.
+
+<Methodology>
+1. Raw mobile pings are collected from 80+ data partners via SDK integrations
+2. Pings are geofenced against 523K+ retail polygons with 15-meter accuracy
+3. Raw counts are normalized against a rolling 365-day baseline to remove panel drift
+4. Year-over-year deltas are computed using the same-day-of-week methodology to account for weekday/weekend patterns
+5. A confidence score (0-1) is assigned based on device density within the geofence, satellite revisit frequency, and historical signal stability
+</Methodology>
+
+## Primary Use Cases
+
+<UseCaseList>
+<UseCase title="Quarterly Revenue Nowcasting">
+Estimate consumer-facing company revenue 4-6 weeks before earnings by aggregating store-level traffic across the full chain. The <FieldRef>visit_count_yoy</FieldRef> field directly maps to same-store-sales growth.
+</UseCase>
+<UseCase title="Post-Event Impact Analysis">
+Measure the real-world impact of store openings, closures, renovations, or competitor entries by tracking foot traffic changes in a geographic radius. Use the <FieldRef>region</FieldRef> field to isolate specific markets.
+</UseCase>
+<UseCase title="Short-Term Trading Signals">
+Build intraday or daily alpha signals around earnings dates by monitoring week-over-week traffic acceleration. Combine with the <FieldRef>confidence</FieldRef> score to weight signals by data quality.
+</UseCase>
+<UseCase title="Real Estate & REIT Analysis">
+Evaluate retail property performance by tracking tenant foot traffic trends. Cross-reference with lease expiration data to identify re-tenanting risk in shopping centers and strip malls.
+</UseCase>
+</UseCaseList>
+
+## Coverage Details
+
+The dataset covers three primary geographies with varying depth:
+
+- **United States**: 412,000+ locations across all 50 states. Coverage density is highest in metropolitan statistical areas (MSAs) with population > 250K. Rural coverage (population < 50K) carries lower confidence scores.
+- **Europe**: 78,000+ locations across UK, Germany, France, Netherlands, and Nordics. Coverage expanded to Southern Europe in Q3 2023.
+- **Asia-Pacific**: 33,000+ locations across Japan, South Korea, Australia, and Singapore. Tier 1 cities only before 2021; Tier 2 expansion ongoing.
+
+<Callout type="info" title="Panel Composition">
+The underlying device panel represents approximately 8-12% of the adult population in US markets and 4-7% in international markets. Normalization algorithms adjust for panel size fluctuations to maintain signal consistency over time.
+</Callout>
+
+## Data Quality Notes
+
+<Callout type="warning" title="Known Coverage Gaps">
+Rural areas with population density below 10,000 per square mile may exhibit confidence scores below 0.5. We recommend filtering to `confidence >= 0.7` for quantitative strategies and `confidence >= 0.5` for broader market research.
+</Callout>
+
+The <FieldRef>ticker</FieldRef> field is populated for approximately 91.6% of locations. Unmapped locations are typically independent retailers, franchisees without a public parent, or newly opened stores awaiting entity resolution. The mapping is refreshed weekly.
+
+<Callout type="tip" title="Backtest Best Practice">
+When backtesting with this dataset, always use the <FieldRef>date</FieldRef> field as your as-of date rather than the delivery timestamp. The data is point-in-time correct -- each record reflects what was known on that date, with no future information leaking into historical observations. The 7-day revision window means only the most recent week of data may change; anything older is immutable.
+</Callout>

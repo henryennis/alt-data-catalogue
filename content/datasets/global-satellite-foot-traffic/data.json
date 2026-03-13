@@ -1,0 +1,365 @@
+{
+  "slug": "global-satellite-foot-traffic",
+  "name": "Global Satellite Foot Traffic",
+  "vendor": "Orbital Insight",
+  "vendorLogo": "/images/datasets/orbital-insight-logo.jpg",
+  "heroImage": "/images/datasets/satellite-foot-traffic-hero.jpg",
+  "category": "satellite",
+  "description": "Anonymized foot traffic counts for 500K+ retail locations derived from satellite and mobile data.",
+  "longDescription": "Orbital Insight's foot traffic dataset combines satellite imagery analysis with anonymized mobile device signals to produce daily visitor estimates across 500,000+ retail locations in the US, Europe, and Asia-Pacific. The data is aggregated at the store level with no personally identifiable information. Each observation includes a normalized visit count, year-over-year delta, and a confidence score indicating signal strength. The dataset is widely used for nowcasting quarterly revenue of consumer-facing companies, tracking post-pandemic recovery trends, and building short-term trading signals around earnings dates.",
+  "frequency": "Daily",
+  "coverage": "US, EU, APAC",
+  "history": "2018 - Present",
+  "creditAmount": 0.8,
+  "creditUnit": "credits/query",
+  "tags": ["retail", "consumer", "foot-traffic"],
+  "assetClasses": ["US Equities", "EU Equities", "REITs"],
+  "deliveryMethods": ["REST API", "Bulk CSV", "Snowflake Share"],
+  "updateSchedule": "Daily by 06:00 UTC, T+1",
+  "fields": [
+    {
+      "name": "date",
+      "type": "DATE",
+      "description": "Observation date",
+      "nullable": false,
+      "example": "2025-01-15"
+    },
+    {
+      "name": "location_id",
+      "type": "VARCHAR(32)",
+      "description": "Unique identifier for the retail location",
+      "nullable": false,
+      "example": "OI-US-WMT-04821"
+    },
+    {
+      "name": "ticker",
+      "type": "VARCHAR(10)",
+      "description": "Associated equity ticker, if mapped",
+      "nullable": true,
+      "example": "WMT"
+    },
+    {
+      "name": "visit_count",
+      "type": "INT",
+      "description": "Normalized daily visitor count",
+      "nullable": false,
+      "example": "4521"
+    },
+    {
+      "name": "visit_count_yoy",
+      "type": "FLOAT",
+      "description": "Year-over-year change in visit count",
+      "nullable": false,
+      "example": "0.127"
+    },
+    {
+      "name": "confidence",
+      "type": "FLOAT",
+      "description": "Signal confidence score (0-1)",
+      "nullable": false,
+      "example": "0.94"
+    },
+    {
+      "name": "region",
+      "type": "VARCHAR(8)",
+      "description": "Geographic region code",
+      "nullable": false,
+      "example": "US-SE"
+    },
+    {
+      "name": "category",
+      "type": "VARCHAR(32)",
+      "description": "Retail category classification",
+      "nullable": false,
+      "example": "big-box-retail"
+    }
+  ],
+  "sla": {
+    "uptime": "99.9%",
+    "deliveryLatency": "< 4 hours from source ingestion",
+    "freshness": "T+1 (data available by 06:00 UTC next day)",
+    "revisionPolicy": "Last 7 days may be revised. Older data is immutable.",
+    "supportTier": "Priority (< 4hr response for enterprise)"
+  },
+  "codeExamples": [
+    {
+      "language": "python",
+      "label": "Python",
+      "code": "from altalpha import DataClient\n\nclient = DataClient(api_key=\"YOUR_KEY\")\n\n# Query foot traffic for Walmart locations\ndf = client.query(\n    dataset=\"orbital-insight/foot-traffic\",\n    filters={\n        \"ticker\": \"WMT\",\n        \"date_gte\": \"2025-01-01\",\n        \"date_lte\": \"2025-01-31\",\n    },\n    fields=[\"date\", \"location_id\", \"visit_count\", \"visit_count_yoy\"],\n)\n\nprint(f\"Records: {len(df)}\")\nprint(df.head())"
+    },
+    {
+      "language": "csharp",
+      "label": "C#",
+      "code": "using DataCatalogue;\n\nvar client = new DataClient(\"YOUR_KEY\");\n\nvar result = await client.QueryAsync(\n    dataset: \"orbital-insight/foot-traffic\",\n    filters: new {\n        ticker = \"WMT\",\n        date_gte = \"2025-01-01\",\n        date_lte = \"2025-01-31\"\n    },\n    fields: new[] { \"date\", \"location_id\", \"visit_count\", \"visit_count_yoy\" }\n);\n\nConsole.WriteLine($\"Records: {result.Count}\");"
+    },
+    {
+      "language": "sql",
+      "label": "SQL",
+      "code": "-- Direct SQL access via Snowflake share\nSELECT\n    date,\n    ticker,\n    AVG(visit_count) AS avg_visits,\n    AVG(visit_count_yoy) AS avg_yoy_change\nFROM altalpha.orbital_insight.foot_traffic\nWHERE ticker = 'WMT'\n  AND date BETWEEN '2025-01-01' AND '2025-01-31'\nGROUP BY date, ticker\nORDER BY date;"
+    }
+  ],
+  "empirical": {
+    "totalRecords": "847M",
+    "nullRate": "2.3%",
+    "avgDailyRecords": "1.2M",
+    "uniqueEntities": "523,419 locations",
+    "medianRecordAge": "14 hours",
+    "lastUpdated": "2025-12-18T06:00:00Z",
+    "fieldStats": [
+      {
+        "field": "visit_count",
+        "min": "0",
+        "max": "89,412",
+        "mean": "2,847",
+        "median": "1,623",
+        "std": "4,219",
+        "skew": "3.41",
+        "kurtosis": "18.7",
+        "nullPct": "0.0",
+        "distinctCount": "41,293"
+      },
+      {
+        "field": "visit_count_yoy",
+        "min": "-0.97",
+        "max": "14.3",
+        "mean": "0.034",
+        "median": "0.012",
+        "std": "0.289",
+        "skew": "1.87",
+        "kurtosis": "9.2",
+        "nullPct": "1.2",
+        "distinctCount": "892,104"
+      },
+      {
+        "field": "confidence",
+        "min": "0.12",
+        "max": "1.0",
+        "mean": "0.87",
+        "median": "0.91",
+        "std": "0.11",
+        "skew": "-1.23",
+        "kurtosis": "4.1",
+        "nullPct": "0.0",
+        "distinctCount": "89"
+      },
+      {
+        "field": "ticker",
+        "min": "N/A",
+        "max": "N/A",
+        "mean": "N/A",
+        "median": "N/A",
+        "std": "N/A",
+        "skew": "N/A",
+        "kurtosis": "N/A",
+        "nullPct": "8.4",
+        "distinctCount": "3,217"
+      }
+    ],
+    "coverageByYear": [
+      { "year": 2018, "completeness": 67 },
+      { "year": 2019, "completeness": 78 },
+      { "year": 2020, "completeness": 82 },
+      { "year": 2021, "completeness": 89 },
+      { "year": 2022, "completeness": 94 },
+      { "year": 2023, "completeness": 97 },
+      { "year": 2024, "completeness": 99 },
+      { "year": 2025, "completeness": 98 }
+    ],
+    "coverageHeatmap": [
+      { "year": 2024, "month": 1, "records": 37200000, "completeness": 98 },
+      { "year": 2024, "month": 2, "records": 34800000, "completeness": 97 },
+      { "year": 2024, "month": 3, "records": 38100000, "completeness": 99 },
+      { "year": 2024, "month": 4, "records": 36900000, "completeness": 98 },
+      { "year": 2024, "month": 5, "records": 38400000, "completeness": 99 },
+      { "year": 2024, "month": 6, "records": 37800000, "completeness": 99 },
+      { "year": 2024, "month": 7, "records": 39100000, "completeness": 100 },
+      { "year": 2024, "month": 8, "records": 38700000, "completeness": 99 },
+      { "year": 2024, "month": 9, "records": 37200000, "completeness": 98 },
+      { "year": 2024, "month": 10, "records": 38900000, "completeness": 99 },
+      { "year": 2024, "month": 11, "records": 37400000, "completeness": 98 },
+      { "year": 2024, "month": 12, "records": 39200000, "completeness": 100 },
+      { "year": 2025, "month": 1, "records": 38100000, "completeness": 99 },
+      { "year": 2025, "month": 2, "records": 35400000, "completeness": 97 },
+      { "year": 2025, "month": 3, "records": 38800000, "completeness": 99 },
+      { "year": 2025, "month": 4, "records": 37600000, "completeness": 98 },
+      { "year": 2025, "month": 5, "records": 39000000, "completeness": 100 },
+      { "year": 2025, "month": 6, "records": 38200000, "completeness": 99 },
+      { "year": 2025, "month": 7, "records": 39400000, "completeness": 100 },
+      { "year": 2025, "month": 8, "records": 38100000, "completeness": 99 },
+      { "year": 2025, "month": 9, "records": 37500000, "completeness": 98 },
+      { "year": 2025, "month": 10, "records": 38600000, "completeness": 99 },
+      { "year": 2025, "month": 11, "records": 37900000, "completeness": 98 },
+      { "year": 2025, "month": 12, "records": 19800000, "completeness": 52 },
+      { "year": 2023, "month": 1, "records": 35100000, "completeness": 95 },
+      { "year": 2023, "month": 2, "records": 32800000, "completeness": 93 },
+      { "year": 2023, "month": 3, "records": 36200000, "completeness": 96 },
+      { "year": 2023, "month": 4, "records": 35400000, "completeness": 95 },
+      { "year": 2023, "month": 5, "records": 36800000, "completeness": 97 },
+      { "year": 2023, "month": 6, "records": 36100000, "completeness": 96 },
+      { "year": 2023, "month": 7, "records": 37200000, "completeness": 98 },
+      { "year": 2023, "month": 8, "records": 36700000, "completeness": 97 },
+      { "year": 2023, "month": 9, "records": 35600000, "completeness": 96 },
+      { "year": 2023, "month": 10, "records": 37100000, "completeness": 98 },
+      { "year": 2023, "month": 11, "records": 35800000, "completeness": 96 },
+      { "year": 2023, "month": 12, "records": 37400000, "completeness": 98 }
+    ],
+    "freshnessTimeline": [
+      { "date": "2025-12-01", "latencyMinutes": 218 },
+      { "date": "2025-12-02", "latencyMinutes": 224 },
+      { "date": "2025-12-03", "latencyMinutes": 210 },
+      { "date": "2025-12-04", "latencyMinutes": 231 },
+      { "date": "2025-12-05", "latencyMinutes": 216 },
+      { "date": "2025-12-06", "latencyMinutes": 245 },
+      { "date": "2025-12-07", "latencyMinutes": 238 },
+      { "date": "2025-12-08", "latencyMinutes": 212 },
+      { "date": "2025-12-09", "latencyMinutes": 220 },
+      { "date": "2025-12-10", "latencyMinutes": 215 },
+      { "date": "2025-12-11", "latencyMinutes": 228 },
+      { "date": "2025-12-12", "latencyMinutes": 241 },
+      { "date": "2025-12-13", "latencyMinutes": 219 },
+      { "date": "2025-12-14", "latencyMinutes": 233 },
+      { "date": "2025-12-15", "latencyMinutes": 207 },
+      { "date": "2025-12-16", "latencyMinutes": 214 },
+      { "date": "2025-12-17", "latencyMinutes": 222 },
+      { "date": "2025-12-18", "latencyMinutes": 211 }
+    ],
+    "fieldCompleteness": [
+      { "field": "date", "pctFilled": 100 },
+      { "field": "location_id", "pctFilled": 100 },
+      { "field": "ticker", "pctFilled": 91.6 },
+      { "field": "visit_count", "pctFilled": 100 },
+      { "field": "visit_count_yoy", "pctFilled": 98.8 },
+      { "field": "confidence", "pctFilled": 100 },
+      { "field": "region", "pctFilled": 100 },
+      { "field": "category", "pctFilled": 99.7 }
+    ],
+    "sampleRows": [
+      {
+        "date": "2025-01-15",
+        "location_id": "OI-US-WMT-04821",
+        "ticker": "WMT",
+        "visit_count": "4521",
+        "visit_count_yoy": "0.127",
+        "confidence": "0.94",
+        "region": "US-SE",
+        "category": "big-box-retail"
+      },
+      {
+        "date": "2025-01-15",
+        "location_id": "OI-US-TGT-01293",
+        "ticker": "TGT",
+        "visit_count": "2817",
+        "visit_count_yoy": "-0.034",
+        "confidence": "0.91",
+        "region": "US-NE",
+        "category": "big-box-retail"
+      },
+      {
+        "date": "2025-01-15",
+        "location_id": "OI-US-COST-00412",
+        "ticker": "COST",
+        "visit_count": "6293",
+        "visit_count_yoy": "0.089",
+        "confidence": "0.96",
+        "region": "US-W",
+        "category": "warehouse-club"
+      },
+      {
+        "date": "2025-01-15",
+        "location_id": "OI-EU-TSCO-02841",
+        "ticker": "TSCO.L",
+        "visit_count": "1847",
+        "visit_count_yoy": "0.052",
+        "confidence": "0.88",
+        "region": "EU-UK",
+        "category": "grocery"
+      },
+      {
+        "date": "2025-01-15",
+        "location_id": "OI-US-HD-03721",
+        "ticker": "HD",
+        "visit_count": "3412",
+        "visit_count_yoy": "0.201",
+        "confidence": "0.93",
+        "region": "US-MW",
+        "category": "home-improvement"
+      }
+    ]
+  },
+  "lineage": [
+    {
+      "stage": "Raw Collection",
+      "description": "Satellite imagery and anonymized mobile device signals collected from 80+ data partners across US, EU, and APAC.",
+      "latency": "Real-time"
+    },
+    {
+      "stage": "Geospatial Matching",
+      "description": "Raw pings matched to 523K+ retail polygons using proprietary geofencing with 15m accuracy.",
+      "latency": "+30 min"
+    },
+    {
+      "stage": "Normalization",
+      "description": "Visit counts normalized for panel bias, weather, and holidays. Year-over-year deltas computed against rolling 365-day baseline.",
+      "latency": "+90 min"
+    },
+    {
+      "stage": "Confidence Scoring",
+      "description": "Each observation scored 0-1 based on signal density, device count, and satellite revisit frequency.",
+      "latency": "+15 min"
+    },
+    {
+      "stage": "Ticker Mapping",
+      "description": "Locations mapped to equity tickers via proprietary entity resolution (3,217 tickers across 42 exchanges).",
+      "latency": "+10 min"
+    },
+    {
+      "stage": "Quality Assurance",
+      "description": "Automated outlier detection, completeness checks, and cross-validation against census baselines.",
+      "latency": "+60 min"
+    },
+    {
+      "stage": "Delivery",
+      "description": "Published to REST API, Snowflake share, and bulk CSV endpoints. Webhooks fire on completion.",
+      "latency": "T+1 by 06:00 UTC"
+    }
+  ],
+  "versionPolicy": {
+    "currentVersion": "3.2.1",
+    "releaseDate": "2025-11-01",
+    "deprecationPolicy": "Prior major versions supported for 12 months after new major release. v2.x deprecated 2026-03-01.",
+    "breakingChanges": "v3.0 changed visit_count from raw to normalized. v3.2 added confidence field. See changelog for migration guide.",
+    "revisionWindow": "Last 7 calendar days may be revised as late-arriving device data is incorporated. Data older than 7 days is immutable.",
+    "historicalRestated": false
+  },
+  "compliance": {
+    "redistributionAllowed": false,
+    "derivedWorksAllowed": true,
+    "piiPresent": false,
+    "gdprCompliant": true,
+    "regulatoryClassification": "Alternative Data - Non-PII aggregate statistics derived from anonymized mobile signals. No individual tracking.",
+    "auditTrail": true,
+    "dataRetentionPolicy": "Full historical archive maintained indefinitely. Clients may request data deletion for their query logs after 90 days."
+  },
+  "backtestGuide": {
+    "engineCompatibility": [
+      "LEAN / QuantConnect",
+      "Zipline",
+      "Backtrader",
+      "Custom Python"
+    ],
+    "sampleBacktest": "from altalpha import DataClient\nfrom lean import Algorithm\n\nclass FootTrafficAlpha(Algorithm):\n    def initialize(self):\n        self.set_start_date(2020, 1, 1)\n        self.set_cash(1_000_000)\n        self.alt = DataClient(api_key=\"YOUR_KEY\")\n        self.universe = [\"WMT\", \"TGT\", \"COST\", \"HD\", \"LOW\"]\n        for ticker in self.universe:\n            self.add_equity(ticker)\n\n    def on_data(self, data):\n        for ticker in self.universe:\n            traffic = self.alt.query(\n                dataset=\"orbital-insight/foot-traffic\",\n                filters={\"ticker\": ticker, \"date\": self.time.date().isoformat()},\n            )\n            if traffic.empty:\n                continue\n            yoy = traffic[\"visit_count_yoy\"].mean()\n            if yoy > 0.05:\n                self.set_holdings(ticker, 1.0 / len(self.universe))\n            elif yoy < -0.05:\n                self.liquidate(ticker)",
+    "knownLimitations": [
+      "Coverage gaps in rural areas with low device density (confidence < 0.5)",
+      "Holiday normalization may undercount Black Friday / Boxing Day traffic",
+      "New store openings have no YoY baseline for first 365 days",
+      "APAC coverage limited to Tier 1 cities before 2021",
+      "Ticker mapping covers ~65% of locations; unmapped locations have null ticker field"
+    ],
+    "lookbackRequired": "365 days minimum for YoY signal stability",
+    "warmupPeriod": "30 days recommended to establish baseline panel composition"
+  },
+  "relatedDatasets": ["twitter-financial-sentiment", "sec-13f-holdings"],
+  "license": "Enterprise License. Data may not be redistributed. Derived signals may be used in proprietary trading strategies without restriction.",
+  "pointInTime": true,
+  "survivorshipBiasFree": true
+}

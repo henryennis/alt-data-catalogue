@@ -1,0 +1,411 @@
+{
+  "slug": "sec-13f-holdings",
+  "name": "SEC 13F Holdings",
+  "vendor": "SEC EDGAR",
+  "vendorLogo": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=200&h=200&fit=crop",
+  "heroImage": "https://images.unsplash.com/photo-1611974212247-49c0c4d4fd32?w=1200&h=400&fit=crop",
+  "category": "sec-filings",
+  "description": "Institutional investor quarterly holdings from 13F filings. Parsed and normalized.",
+  "longDescription": "SEC Form 13F is the quarterly snapshot of institutional investor (hedge funds, mutual funds, pensions) positions in US equities. This dataset provides fully parsed and normalized holdings data extracted from raw SEC EDGAR filings. Each record represents one line item (holding) from one institutional manager's 13F filing.",
+  "frequency": "Quarterly",
+  "coverage": "US Equities & ADRs",
+  "history": "2000 - Present",
+  "creditAmount": 0.1,
+  "creditUnit": "credits/query",
+  "tags": ["institutional", "holdings", "13f", "sec-filings", "regulatory"],
+  "assetClasses": ["US Equities"],
+  "deliveryMethods": ["REST API", "Bulk CSV", "Snowflake Share"],
+  "updateSchedule": "Quarterly (within 45 days of quarter-end); historical backfills through 2000",
+  "fields": [
+    {
+      "name": "filing_date",
+      "type": "DATE",
+      "description": "SEC filing date (within 45 days of quarter-end)",
+      "nullable": false,
+      "example": "2025-02-14"
+    },
+    {
+      "name": "quarter_end",
+      "type": "DATE",
+      "description": "Quarter-end date for which holdings are reported",
+      "nullable": false,
+      "example": "2024-12-31"
+    },
+    {
+      "name": "cik",
+      "type": "STRING",
+      "description": "Central Index Key; SEC unique identifier for filing company",
+      "nullable": false,
+      "example": "0001567180"
+    },
+    {
+      "name": "manager_name",
+      "type": "STRING",
+      "description": "Institutional manager name as reported to SEC",
+      "nullable": false,
+      "example": "Berkshire Hathaway Inc"
+    },
+    {
+      "name": "cusip",
+      "type": "STRING",
+      "description": "9-character CUSIP identifier for the security",
+      "nullable": false,
+      "example": "037833100"
+    },
+    {
+      "name": "ticker",
+      "type": "STRING",
+      "description": "Stock ticker symbol (may be null for non-US ADRs or delisted securities)",
+      "nullable": true,
+      "example": "AAPL"
+    },
+    {
+      "name": "security_name",
+      "type": "STRING",
+      "description": "Full security name from EDGAR filing",
+      "nullable": false,
+      "example": "Apple Inc"
+    },
+    {
+      "name": "shares_held",
+      "type": "BIGINT",
+      "description": "Number of shares held as of quarter-end",
+      "nullable": false,
+      "example": "915560116"
+    },
+    {
+      "name": "value_usd",
+      "type": "BIGINT",
+      "description": "Fair value in USD (thousands). Derived from filing; not actual purchase price.",
+      "nullable": false,
+      "example": "151234000"
+    },
+    {
+      "name": "put_call_flag",
+      "type": "STRING",
+      "description": "\"C\" (call option), \"P\" (put option), or null (common stock)",
+      "nullable": true,
+      "example": "C"
+    },
+    {
+      "name": "sole_voting",
+      "type": "BIGINT",
+      "description": "Shares with sole voting authority",
+      "nullable": true,
+      "example": "915560116"
+    },
+    {
+      "name": "shared_voting",
+      "type": "BIGINT",
+      "description": "Shares with shared voting authority",
+      "nullable": true,
+      "example": "0"
+    },
+    {
+      "name": "none_voting",
+      "type": "BIGINT",
+      "description": "Shares with no voting authority (e.g., ADRs with restricted voting)",
+      "nullable": true,
+      "example": "0"
+    }
+  ],
+  "sla": {
+    "uptime": "99.9%",
+    "deliveryLatency": "< 2 business days after SEC filing",
+    "freshness": "Quarterly; data becomes available within 45 days of quarter-end",
+    "revisionPolicy": "13F filings are amended only rarely. Amendments (Form 13F/A) published as separate records. Historical filings are immutable.",
+    "supportTier": "Standard (< 48hr response for support)"
+  },
+  "codeExamples": [
+    {
+      "language": "python",
+      "label": "Python",
+      "code": "import requests\nimport pandas as pd\n\n# Fetch Berkshire Hathaway's latest 13F holdings\nresponse = requests.get(\n    'https://api.sec-data.com/v1/form-13f',\n    params={\n        'cik': '0001067983',  # Berkshire Hathaway\n        'limit': 1000\n    },\n    headers={'Authorization': 'Bearer YOUR_API_KEY'}\n)\n\nholdings = response.json()\ndf = pd.DataFrame(holdings['results'])\n\n# Calculate portfolio concentration\ndf['portfolio_weight'] = df['value_usd'] / df['value_usd'].sum()\ndf = df.sort_values('portfolio_weight', ascending=False)\n\nprint(f\"Top 10 Holdings:\")\nprint(df[['security_name', 'ticker', 'shares_held', 'portfolio_weight']].head(10))"
+    },
+    {
+      "language": "sql",
+      "label": "SQL",
+      "code": "-- Find all hedge funds holding AAPL in the latest quarter\nSELECT \n  manager_name,\n  shares_held,\n  value_usd,\n  filing_date,\n  quarter_end,\n  CAST(value_usd AS FLOAT) / SUM(value_usd) OVER (PARTITION BY cik) * 100 as pct_of_portfolio\nFROM sec_13f_holdings\nWHERE ticker = 'AAPL'\n  AND quarter_end = (\n    SELECT MAX(quarter_end) FROM sec_13f_holdings\n  )\nORDER BY value_usd DESC;"
+    },
+    {
+      "language": "csharp",
+      "label": "C#",
+      "code": "using HttpClient client = new HttpClient();\nclient.DefaultRequestHeaders.Add(\"Authorization\", \"Bearer YOUR_API_KEY\");\n\n// Get 13F data for a specific manager and quarter\nvar url = \"https://api.sec-data.com/v1/form-13f?\" +\n    \"cik=0001067983&\" +\n    \"quarter_end=2024-12-31\";\n\nvar response = await client.GetAsync(url);\nvar content = await response.Content.ReadAsStringAsync();\n\nvar options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };\nvar holdings = JsonSerializer.Deserialize<List<Holding>>(content, options);\n\nvar totalValue = holdings.Sum(h => h.ValueUsd);\nvar topPositions = holdings\n    .OrderByDescending(h => h.ValueUsd)\n    .Take(5)\n    .ForEach(h => Console.WriteLine(\n        $\"{h.SecurityName}: {h.SharesHeld} shares, ${h.ValueUsd}K ({h.ValueUsd / (decimal)totalValue * 100:F2}%)\"\n    ));"
+    }
+  ],
+  "empirical": {
+    "totalRecords": "542M",
+    "nullRate": "2.1%",
+    "avgDailyRecords": "0",
+    "uniqueEntities": "5247 institutional managers (current); 450M+ holdings lines (25 years history)",
+    "medianRecordAge": "90 days",
+    "lastUpdated": "2025-02-14T12:00:00Z",
+    "fieldStats": [
+      {
+        "field": "shares_held",
+        "min": "1",
+        "max": "2847120300",
+        "mean": "1834521",
+        "median": "23450",
+        "std": "8742310",
+        "skew": "12.34",
+        "kurtosis": "187.45",
+        "nullPct": "0.0",
+        "distinctCount": "28492834"
+      },
+      {
+        "field": "value_usd",
+        "min": "1",
+        "max": "151234000",
+        "mean": "18342000",
+        "median": "234000",
+        "std": "87423000",
+        "skew": "8.12",
+        "kurtosis": "94.23",
+        "nullPct": "0.1",
+        "distinctCount": "184928342"
+      },
+      {
+        "field": "sole_voting",
+        "min": "0",
+        "max": "2847120300",
+        "mean": "1654321",
+        "median": "18234",
+        "std": "7234891",
+        "skew": "11.23",
+        "kurtosis": "156.78",
+        "nullPct": "18.4",
+        "distinctCount": "23948234"
+      },
+      {
+        "field": "shared_voting",
+        "min": "0",
+        "max": "182340000",
+        "mean": "142380",
+        "median": "0",
+        "std": "847392",
+        "skew": "22.45",
+        "kurtosis": "512.34",
+        "nullPct": "84.2",
+        "distinctCount": "3847290"
+      }
+    ],
+    "coverageByYear": [
+      { "year": 2000, "completeness": 67 },
+      { "year": 2005, "completeness": 82 },
+      { "year": 2010, "completeness": 91 },
+      { "year": 2015, "completeness": 96 },
+      { "year": 2020, "completeness": 98 },
+      { "year": 2024, "completeness": 99 }
+    ],
+    "coverageHeatmap": [
+      { "year": 2025, "month": 3, "records": 18200000, "completeness": 92 },
+      { "year": 2024, "month": 12, "records": 18900000, "completeness": 99 },
+      { "year": 2024, "month": 9, "records": 17850000, "completeness": 98 },
+      { "year": 2024, "month": 6, "records": 18120000, "completeness": 99 },
+      { "year": 2024, "month": 3, "records": 18450000, "completeness": 99 },
+      { "year": 2023, "month": 12, "records": 17920000, "completeness": 98 },
+      { "year": 2023, "month": 9, "records": 18310000, "completeness": 99 },
+      { "year": 2023, "month": 6, "records": 17640000, "completeness": 98 },
+      { "year": 2023, "month": 3, "records": 18890000, "completeness": 99 },
+      { "year": 2022, "month": 12, "records": 16780000, "completeness": 97 },
+      { "year": 2022, "month": 9, "records": 17120000, "completeness": 98 },
+      { "year": 2022, "month": 6, "records": 16450000, "completeness": 97 },
+      { "year": 2022, "month": 3, "records": 17890000, "completeness": 98 },
+      { "year": 2021, "month": 12, "records": 16240000, "completeness": 96 },
+      { "year": 2021, "month": 9, "records": 16720000, "completeness": 97 },
+      { "year": 2021, "month": 6, "records": 15890000, "completeness": 95 },
+      { "year": 2021, "month": 3, "records": 17340000, "completeness": 97 },
+      { "year": 2020, "month": 12, "records": 15670000, "completeness": 94 },
+      { "year": 2020, "month": 9, "records": 16120000, "completeness": 95 },
+      { "year": 2020, "month": 6, "records": 15340000, "completeness": 94 },
+      { "year": 2020, "month": 3, "records": 16890000, "completeness": 96 },
+      { "year": 2019, "month": 12, "records": 14560000, "completeness": 92 },
+      { "year": 2019, "month": 9, "records": 15120000, "completeness": 93 },
+      { "year": 2019, "month": 6, "records": 14780000, "completeness": 92 }
+    ],
+    "freshnessTimeline": [
+      { "date": "2025-02-14", "latencyMinutes": 1440 },
+      { "date": "2025-02-10", "latencyMinutes": 1440 },
+      { "date": "2025-02-07", "latencyMinutes": 1440 },
+      { "date": "2025-02-03", "latencyMinutes": 1440 },
+      { "date": "2025-01-31", "latencyMinutes": 1440 },
+      { "date": "2025-01-27", "latencyMinutes": 1440 },
+      { "date": "2025-01-24", "latencyMinutes": 1440 },
+      { "date": "2025-01-20", "latencyMinutes": 1440 },
+      { "date": "2025-01-17", "latencyMinutes": 1440 },
+      { "date": "2025-01-13", "latencyMinutes": 1440 },
+      { "date": "2025-01-10", "latencyMinutes": 1440 },
+      { "date": "2025-01-06", "latencyMinutes": 1440 },
+      { "date": "2024-12-27", "latencyMinutes": 1440 },
+      { "date": "2024-12-20", "latencyMinutes": 1440 },
+      { "date": "2024-12-13", "latencyMinutes": 1440 }
+    ],
+    "fieldCompleteness": [
+      { "field": "filing_date", "pctFilled": 100 },
+      { "field": "quarter_end", "pctFilled": 100 },
+      { "field": "cik", "pctFilled": 100 },
+      { "field": "manager_name", "pctFilled": 100 },
+      { "field": "cusip", "pctFilled": 100 },
+      { "field": "ticker", "pctFilled": 97.9 },
+      { "field": "security_name", "pctFilled": 100 },
+      { "field": "shares_held", "pctFilled": 100 },
+      { "field": "value_usd", "pctFilled": 99.9 },
+      { "field": "sole_voting", "pctFilled": 81.6 },
+      { "field": "shared_voting", "pctFilled": 15.8 },
+      { "field": "none_voting", "pctFilled": 15.8 }
+    ],
+    "sampleRows": [
+      {
+        "filing_date": "2025-02-14",
+        "quarter_end": "2024-12-31",
+        "cik": "0001067983",
+        "manager_name": "Berkshire Hathaway Inc",
+        "cusip": "037833100",
+        "ticker": "AAPL",
+        "security_name": "Apple Inc",
+        "shares_held": "915560116",
+        "value_usd": "151234000",
+        "put_call_flag": "",
+        "sole_voting": "915560116",
+        "shared_voting": "0",
+        "none_voting": "0"
+      },
+      {
+        "filing_date": "2025-02-14",
+        "quarter_end": "2024-12-31",
+        "cik": "0001067983",
+        "manager_name": "Berkshire Hathaway Inc",
+        "cusip": "594918104",
+        "ticker": "KUMC",
+        "security_name": "Kansas City Life Insurance Co",
+        "shares_held": "7942324",
+        "value_usd": "240234",
+        "put_call_flag": "",
+        "sole_voting": "7942324",
+        "shared_voting": "0",
+        "none_voting": "0"
+      },
+      {
+        "filing_date": "2025-02-14",
+        "quarter_end": "2024-12-31",
+        "cik": "0001018142",
+        "manager_name": "T Rowe Price Associates Inc",
+        "cusip": "074271084",
+        "ticker": "CTB",
+        "security_name": "Cooper Tire & Rubber Co",
+        "shares_held": "4324234",
+        "value_usd": "82342",
+        "put_call_flag": "",
+        "sole_voting": "4324234",
+        "shared_voting": "0",
+        "none_voting": "0"
+      },
+      {
+        "filing_date": "2025-02-14",
+        "quarter_end": "2024-12-31",
+        "cik": "0001166559",
+        "manager_name": "Vanguard Group Inc",
+        "cusip": "023135106",
+        "ticker": "AMZN",
+        "security_name": "Amazon Com Inc",
+        "shares_held": "20234560",
+        "value_usd": "2834230",
+        "put_call_flag": "",
+        "sole_voting": "20234560",
+        "shared_voting": "0",
+        "none_voting": "0"
+      },
+      {
+        "filing_date": "2025-02-14",
+        "quarter_end": "2024-12-31",
+        "cik": "0001212597",
+        "manager_name": "Pershing Square Capital Management",
+        "cusip": "585055088",
+        "ticker": "GMBL",
+        "security_name": "Gamergen Ltd",
+        "shares_held": "234234",
+        "value_usd": "8234",
+        "put_call_flag": "",
+        "sole_voting": "234234",
+        "shared_voting": "0",
+        "none_voting": "0"
+      }
+    ]
+  },
+  "lineage": [
+    {
+      "stage": "SEC EDGAR Raw Filings",
+      "description": "Form 13F filings submitted to SEC via EDGAR. Includes cover page, summary, and detailed holdings tables.",
+      "latency": "Real-time from SEC systems"
+    },
+    {
+      "stage": "HTML/XML Parsing",
+      "description": "Extracts structured holdings data from SEC's XML submission and HTML renderings. Handles variations in formatting.",
+      "latency": "< 1 hour"
+    },
+    {
+      "stage": "CUSIP/Ticker Resolution",
+      "description": "Maps CUSIP codes to tickers using SEC cross-reference and third-party databases (Bloomberg, FactSet). Handles delistings.",
+      "latency": "< 2 hours"
+    },
+    {
+      "stage": "Validation & Reconciliation",
+      "description": "Checks filing totals, detects duplicate lines, validates CIK/manager relationships. Flags amended filings (13F/A).",
+      "latency": "< 4 hours"
+    },
+    {
+      "stage": "Historical Standardization",
+      "description": "For filings prior to 2012, normalizes field names and data types to current schema. Backfill verified back to 2000.",
+      "latency": "Batch process, async"
+    },
+    {
+      "stage": "Delivery",
+      "description": "Publishes parsed data to REST API, bulk export CSV, and Snowflake Share. Quarterly updates triggered within 2 days of filing.",
+      "latency": "< 2 business days after SEC filing"
+    }
+  ],
+  "versionPolicy": {
+    "currentVersion": "3.0.0",
+    "releaseDate": "2020-03-15",
+    "deprecationPolicy": "Current version supported indefinitely. Previous major versions supported for 10 years minimum (for historical research).",
+    "breakingChanges": "v3.0 (Mar 2020): Deprecated legacy 'ADS' flag; consolidated voting columns (sole_voting, shared_voting, none_voting). v2.0 (2012): Added CUSIP field and standardized date formats.",
+    "revisionWindow": "Form 13F/A (amended filings) published as separate records with same CIK/quarter. Original filing is never modified.",
+    "historicalRestated": false
+  },
+  "compliance": {
+    "redistributionAllowed": true,
+    "derivedWorksAllowed": true,
+    "piiPresent": false,
+    "gdprCompliant": true,
+    "regulatoryClassification": "Public regulatory filing data from SEC EDGAR. No restrictions on use (U.S. federal public domain).",
+    "auditTrail": true,
+    "dataRetentionPolicy": "All filings from 1995-present retained. EDGAR archives go back to 1994 but earlier data less complete."
+  },
+  "backtestGuide": {
+    "engineCompatibility": [
+      "LEAN / QuantConnect",
+      "Zipline",
+      "Backtrader",
+      "Custom Python"
+    ],
+    "sampleBacktest": "import pandas as pd\nfrom datetime import datetime, timedelta\n\n# Load Berkshire Hathaway's largest 10 positions over time\nqtrs = ['2024-12-31', '2024-09-30', '2024-06-30', '2024-03-31']\nportfolio_history = []\n\nfor qtr in qtrs:\n    holdings = fetch_13f(cik='0001067983', quarter_end=qtr)\n    top_10 = holdings.nlargest(10, 'value_usd')\n    top_10['quarter_end'] = qtr\n    portfolio_history.append(top_10)\n\ndf = pd.concat(portfolio_history)\nprint(\"Largest holdings by quarter:\")\nprint(df.pivot_table(values='value_usd', index='security_name', columns='quarter_end'))",
+    "knownLimitations": [
+      "Form 13F reports positions *as of quarter-end*, not at filing date. Data is 40+ days stale when published.",
+      "13F only covers equity holdings >$100K position value. Smaller positions are not disclosed.",
+      "Put/call options (put_call_flag) are treated as separate line items; aggregate stock+options positions separately.",
+      "Survivorship bias: liquidated funds disappear from dataset. Historical data skews toward survivors.",
+      "Multiple class shares (e.g., BRKA vs BRKB) may be reported as separate line items; requires aggregation for total exposure.",
+      "Non-US ADRs and foreign ordinaries may lack ticker mappings; rely on CUSIP for identification."
+    ],
+    "lookbackRequired": "90 days minimum to identify manager portfolio weights. One year minimum for position turnover and conviction trends.",
+    "warmupPeriod": "Minimum 4-8 quarters (1-2 years) to calibrate baseline manager behavior; some strategies need 5+ years for regime identification"
+  },
+  "relatedDatasets": [
+    "global-satellite-foot-traffic",
+    "twitter-financial-sentiment"
+  ],
+  "license": "Public Domain. This data is extracted from SEC EDGAR filings which are U.S. federal public domain. No restrictions on redistribution or derived works.",
+  "pointInTime": true,
+  "survivorshipBiasFree": false
+}
