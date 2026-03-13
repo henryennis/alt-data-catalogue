@@ -1,0 +1,96 @@
+---
+slug: sec-13f-holdings
+---
+
+## Overview
+
+Form 13F is the institutional investor's quarterly portfolio snapshot. Every hedge fund, mutual fund, pension, and investment advisor managing >$100M in US equities must file a 13F with the SEC within 45 days of quarter-end. This dataset provides **fully parsed and normalized holdings data** extracted from these filings.
+
+Each record represents one line item (holding) from one institutional manager's 13F. You get granular visibility into what large institutions actually own: position sizes, voting authority, option holdings, and more.
+
+13F data is the gold standard for institutional positioning analysis. It's the only mandatory quarterly disclosure of large equity positions. Hedge fund flow, institutional rotation, and short squeeze risk can all be identified from 13F trends.
+
+## Signal Construction
+
+The signal construction pipeline transforms raw SEC EDGAR filings into queryable data:
+
+1. **EDGAR Filing Retrieval** — SEC EDGAR publishes 13F filings daily. We capture both original filings and amendments (13F/A).
+2. **XML/HTML Parsing** — Extracts structured data from SEC's machine-readable submission. Handles variations in table layout and formatting.
+3. **CUSIP Resolution** — Maps 9-character CUSIP codes to ticker symbols using SEC cross-reference database + third-party sources. Handles delistings and changes-of-control.
+4. **Validation & Flagging** — Detects duplicate lines, amended filings, and out-of-range values. Flags filings with validation warnings.
+5. **Historical Standardization** — For pre-2012 filings, field names and data types are normalized to current schema. Backfill verified to 2000.
+6. **Quarterly Release** — Filings are published as a batch snapshot on the first business day of the new quarter.
+
+<Methodology>
+The parser is trained on 25 years of SEC EDGAR HTML and XML layouts. Post-2012 filings use XBRL (eXtensible Business Reporting Language), which is machine-readable. Pre-2012 filings are HTML tables parsed with regex and heuristics. All records are validated against SEC totals (sum of holdings must match reported totals). Any data that doesn't pass validation is flagged and published separately for review.
+</Methodology>
+
+## Primary Use Cases
+
+<UseCaseList>
+<UseCase title="Institutional Positioning & Flow">
+Track large fund positioning changes. When Berkshire, Citadel, or Renaissance add/exit positions, it signals conviction and provides hedge fund bagholder identification.
+</UseCase>
+<UseCase title="Short Squeeze Risk & Borrow Scarcity">
+Identify concentrated positions held by few institutional shareholders. High institutional ownership + low float = short squeeze risk. Pair with borrow cost data for squeeze probability scoring.
+</UseCase>
+<UseCase title="Factor & Sector Rotation">
+Monitor institutional positioning by fund type (hedge fund vs. mutual fund vs. pension). Rotation from growth to value, or tech to energy, often precedes 3-6 month moves.
+</UseCase>
+</UseCaseList>
+
+## Coverage Details
+
+The dataset covers **all institutional managers** filing 13Fs, from mega-cap asset managers (Vanguard, BlackRock) to micro-cap hedge funds. Coverage includes:
+
+- **5,200+** unique institutional managers (current quarter)
+- **500M+** individual line items across 25 years
+- **US equities and ADRs** (foreign ordinaries also included)
+- **Options positions** (reported as separate line items with put_call_flag)
+
+New managers appear in dataset when they file first 13F. Liquidated managers disappear after final 13F filing.
+
+<Callout type="info" title="Lag & Quarter-End Snapshot">
+Form 13F reports holdings as of quarter-end (12/31, 3/31, 6/30, 9/30) but is filed within 45 days. This creates a 40+ day lag. A position change on 1/15 won't be visible until the 3/31 quarterly 13F is filed in early May.
+</Callout>
+
+## Data Quality Notes
+
+The <FieldRef>ticker</FieldRef> field is populated for ~98% of modern holdings. For older filings (pre-2010) and non-US ADRs, ticker mapping may be incomplete; always use <FieldRef>cusip</FieldRef> as the primary identifier.
+
+Voting authority fields (<FieldRef>sole_voting</FieldRef>, <FieldRef>shared_voting</FieldRef>, <FieldRef>none_voting</FieldRef>) are often sparse. SEC rules allow managers to report combined totals; detailed voting breakdowns are not always provided. These fields are ~15-80% null depending on manager and era.
+
+<FieldRef>shares_held</FieldRef> can be extraordinarily large (billions for mega-cap holdings) and extraordinarily small (penny stocks with 1-share positions). Be careful with aggregation and use appropriate numeric types (BIGINT minimum).
+
+<Callout type="warning" title="Form 13F/A Amendments">
+Amendment filings (Form 13F/A) are published separately with the same CIK and quarter_end. When analyzing historical data, ensure you're using the *latest* filing for each CIK/quarter combination. Naive aggregation can double-count positions if both original and amended versions are included.
+</Callout>
+
+<Callout type="tip" title="Backtest Point-in-Time Compliance">
+When backtesting, ensure you use filings available *as of the backtest date*. Do not look ahead to future quarters. The 45-day filing window means Q1 data isn't available until early May. Your backtest signal should only use filing data that was published before the trade signal date.
+</Callout>
+
+## Known Limitations
+
+- **Lag** — Data is stale by 40+ days. Intra-quarter positioning changes are invisible.
+- **Minimum Position Size** — Positions below $100K are not disclosed. Emerging positions and "test buys" are hidden.
+- **Survivorship Bias** — Liquidated funds disappear from the dataset. Historical data skews toward surviving, successful managers.
+- **Multiple Share Classes** — Berkshire A vs. B, different Google share classes, etc., are reported as separate line items. Requires manual aggregation.
+- **ADR vs. Foreign Ordinary** — Same underlying company may have multiple US-listed instruments; careful deduplication required.
+- **Missing Voting Detail** — Many managers don't break down voting authority (solo, shared, none). Voting fields are sparse.
+
+## Regulatory Context
+
+Form 13F is a **mandatory quarterly filing** for all investment managers with $100M+ in assets under management. It's enforced by the SEC under Section 13(f) of the Securities Exchange Act of 1934.
+
+**Key Points:**
+- Covers US-listed equities only (ADRs included; foreign ordinaries included)
+- Covers options (separate line items with put_call_flag)
+- Does NOT cover bonds, commodities, or foreign equities traded on foreign exchanges
+- Estimated date of filing is 45 days after quarter-end
+
+## Version & Support
+
+Current data spans **2000 - Present**. Historical data quality improves from 2012 onward (XBRL era). Pre-2012 data is 90%+ complete but formatted with slight variations.
+
+For questions on specific filings, cross-reference SEC EDGAR directly at https://www.sec.gov/cgi-bin/browse-edgar.

@@ -1,0 +1,6 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+  <text x="600" y="280" text-anchor="middle" font-family="system-ui, sans-serif" font-size="72" font-weight="700" fill="#ffffff">DataCatalogue</text>
+  <text x="600" y="360" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" fill="#a1a1aa">Browse &amp; Explore Curated Datasets</text>
+  <rect x="540" y="400" width="120" height="4" rx="2" fill="#B91C1C"/>
+</svg>

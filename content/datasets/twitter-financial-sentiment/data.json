@@ -1,0 +1,361 @@
+{
+  "slug": "twitter-financial-sentiment",
+  "name": "Twitter Financial Sentiment",
+  "vendor": "SocialSentiment",
+  "vendorLogo": "https://images.unsplash.com/photo-1611339555312-e607c25352ba?w=200&h=200&fit=crop",
+  "heroImage": "https://images.unsplash.com/photo-1639762681033-6461efb0aba6?w=1200&h=400&fit=crop",
+  "category": "sentiment",
+  "description": "Real-time sentiment scores for S&P 500 tickers derived from Twitter/X financial discourse.",
+  "longDescription": "Twitter Financial Sentiment provides institutional investors with minute-level sentiment data extracted from public tweets mentioning S&P 500 companies. Each observation combines natural language processing across 100K+ daily financial tweets with market-relevant metadata like engagement metrics and user influence scores.",
+  "frequency": "Hourly",
+  "coverage": "US Equities (S&P 500)",
+  "history": "2020 - Present",
+  "creditAmount": 0.3,
+  "creditUnit": "credits/query",
+  "tags": ["social", "nlp", "equities", "sentiment", "real-time"],
+  "assetClasses": ["US Equities", "Tech", "Financial Services"],
+  "deliveryMethods": ["REST API", "WebSocket Stream", "S3 Bulk Export"],
+  "updateSchedule": "Hourly, 15 minutes latency from tweet posting",
+  "fields": [
+    {
+      "name": "date",
+      "type": "DATE",
+      "description": "Date of observation (UTC)",
+      "nullable": false,
+      "example": "2025-01-15"
+    },
+    {
+      "name": "hour",
+      "type": "INTEGER",
+      "description": "Hour of day (0-23 UTC)",
+      "nullable": false,
+      "example": "14"
+    },
+    {
+      "name": "ticker",
+      "type": "STRING",
+      "description": "S&P 500 stock ticker symbol",
+      "nullable": false,
+      "example": "AAPL"
+    },
+    {
+      "name": "sentiment_score",
+      "type": "FLOAT",
+      "description": "Sentiment polarity from -1 (very negative) to +1 (very positive), 0 = neutral",
+      "nullable": false,
+      "example": "0.45"
+    },
+    {
+      "name": "sentiment_label",
+      "type": "STRING",
+      "description": "Categorical sentiment: positive, negative, neutral, mixed",
+      "nullable": false,
+      "example": "positive"
+    },
+    {
+      "name": "tweet_volume",
+      "type": "INTEGER",
+      "description": "Number of tweets in this hour matching ticker mention",
+      "nullable": false,
+      "example": "1247"
+    },
+    {
+      "name": "engagement_score",
+      "type": "FLOAT",
+      "description": "Aggregated likes, retweets, replies normalized to 0-1 scale",
+      "nullable": false,
+      "example": "0.68"
+    },
+    {
+      "name": "confidence",
+      "type": "FLOAT",
+      "description": "Model confidence in sentiment classification (0-1)",
+      "nullable": false,
+      "example": "0.89"
+    },
+    {
+      "name": "influencer_weight",
+      "type": "FLOAT",
+      "description": "Weighted influence of contributors (higher = more influential users)",
+      "nullable": false,
+      "example": "0.73"
+    }
+  ],
+  "sla": {
+    "uptime": "99.5%",
+    "deliveryLatency": "< 15 minutes from tweet posting",
+    "freshness": "Hourly aggregations, available by T+15min",
+    "revisionPolicy": "Last 24 hours may be revised as more tweets are collected. Data older than 24h is finalized.",
+    "supportTier": "Standard (< 24hr response for enterprise)"
+  },
+  "codeExamples": [
+    {
+      "language": "python",
+      "label": "Python",
+      "code": "import requests\nimport pandas as pd\nfrom datetime import datetime, timedelta\n\n# Fetch hourly sentiment for AAPL\nresponse = requests.get(\n    'https://api.socialsent.com/v1/sentiment',\n    params={\n        'ticker': 'AAPL',\n        'start_date': '2025-01-01',\n        'end_date': '2025-01-15',\n        'interval': 'hourly'\n    },\n    headers={'Authorization': 'Bearer YOUR_API_KEY'}\n)\n\ndata = response.json()\ndf = pd.DataFrame(data['results'])\nprint(df[['date', 'ticker', 'sentiment_score', 'tweet_volume']].head())"
+    },
+    {
+      "language": "sql",
+      "label": "SQL",
+      "code": "SELECT \n  date,\n  hour,\n  ticker,\n  AVG(sentiment_score) as avg_sentiment,\n  SUM(tweet_volume) as total_tweets,\n  AVG(engagement_score) as avg_engagement\nFROM twitter_sentiment\nWHERE ticker IN ('AAPL', 'MSFT', 'GOOGL')\n  AND date BETWEEN '2025-01-01' AND '2025-01-15'\nGROUP BY date, hour, ticker\nORDER BY date DESC, hour DESC;"
+    },
+    {
+      "language": "csharp",
+      "label": "C#",
+      "code": "using HttpClient client = new HttpClient();\nclient.DefaultRequestHeaders.Add(\"Authorization\", \"Bearer YOUR_API_KEY\");\n\nvar url = \"https://api.socialsent.com/v1/sentiment?\" +\n    \"ticker=AAPL&\" +\n    \"start_date=2025-01-01&\" +\n    \"end_date=2025-01-15&\" +\n    \"interval=hourly\";\n\nvar response = await client.GetAsync(url);\nvar json = await response.Content.ReadAsStringAsync();\n\nvar options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };\nvar results = JsonSerializer.Deserialize<SentimentResult[]>(json, options);\n\nforeach (var record in results.Take(5))\n{\n    Console.WriteLine($\"{record.Ticker}: {record.SentimentScore} ({record.TweetVolume} tweets)\");\n}"
+    }
+  ],
+  "empirical": {
+    "totalRecords": "142M",
+    "nullRate": "0.8%",
+    "avgDailyRecords": "195K",
+    "uniqueEntities": "500 tickers (S&P 500)",
+    "medianRecordAge": "3 hours",
+    "lastUpdated": "2025-12-18T17:00:00Z",
+    "fieldStats": [
+      {
+        "field": "sentiment_score",
+        "min": "-0.98",
+        "max": "0.99",
+        "mean": "0.12",
+        "median": "0.18",
+        "std": "0.31",
+        "skew": "-0.45",
+        "kurtosis": "1.23",
+        "nullPct": "0.0",
+        "distinctCount": "2847"
+      },
+      {
+        "field": "tweet_volume",
+        "min": "1",
+        "max": "18923",
+        "mean": "284",
+        "median": "142",
+        "std": "512",
+        "skew": "3.21",
+        "kurtosis": "15.67",
+        "nullPct": "0.0",
+        "distinctCount": "4521"
+      },
+      {
+        "field": "engagement_score",
+        "min": "0.0",
+        "max": "1.0",
+        "mean": "0.34",
+        "median": "0.29",
+        "std": "0.28",
+        "skew": "0.87",
+        "kurtosis": "0.54",
+        "nullPct": "0.0",
+        "distinctCount": "1203"
+      },
+      {
+        "field": "confidence",
+        "min": "0.54",
+        "max": "0.99",
+        "mean": "0.82",
+        "median": "0.85",
+        "std": "0.12",
+        "skew": "-1.05",
+        "kurtosis": "2.34",
+        "nullPct": "0.0",
+        "distinctCount": "387"
+      }
+    ],
+    "coverageByYear": [
+      { "year": 2020, "completeness": 65 },
+      { "year": 2021, "completeness": 89 },
+      { "year": 2022, "completeness": 95 },
+      { "year": 2023, "completeness": 98 },
+      { "year": 2024, "completeness": 99 },
+      { "year": 2025, "completeness": 97 }
+    ],
+    "coverageHeatmap": [
+      { "year": 2025, "month": 1, "records": 8420000, "completeness": 98 },
+      { "year": 2024, "month": 12, "records": 9150000, "completeness": 99 },
+      { "year": 2024, "month": 11, "records": 8890000, "completeness": 99 },
+      { "year": 2024, "month": 10, "records": 9200000, "completeness": 99 },
+      { "year": 2024, "month": 9, "records": 8750000, "completeness": 98 },
+      { "year": 2024, "month": 8, "records": 9050000, "completeness": 99 },
+      { "year": 2024, "month": 7, "records": 8950000, "completeness": 99 },
+      { "year": 2024, "month": 6, "records": 8620000, "completeness": 98 },
+      { "year": 2024, "month": 5, "records": 9120000, "completeness": 99 },
+      { "year": 2024, "month": 4, "records": 8820000, "completeness": 99 },
+      { "year": 2024, "month": 3, "records": 9020000, "completeness": 99 },
+      { "year": 2024, "month": 2, "records": 8410000, "completeness": 98 },
+      { "year": 2024, "month": 1, "records": 9310000, "completeness": 99 },
+      { "year": 2023, "month": 12, "records": 8950000, "completeness": 99 },
+      { "year": 2023, "month": 11, "records": 8720000, "completeness": 98 },
+      { "year": 2023, "month": 10, "records": 9150000, "completeness": 99 },
+      { "year": 2023, "month": 9, "records": 8890000, "completeness": 98 },
+      { "year": 2023, "month": 8, "records": 9020000, "completeness": 99 },
+      { "year": 2023, "month": 7, "records": 8750000, "completeness": 98 },
+      { "year": 2023, "month": 6, "records": 9180000, "completeness": 99 },
+      { "year": 2023, "month": 5, "records": 8920000, "completeness": 99 },
+      { "year": 2023, "month": 4, "records": 9010000, "completeness": 99 },
+      { "year": 2023, "month": 3, "records": 8680000, "completeness": 98 },
+      { "year": 2023, "month": 2, "records": 8420000, "completeness": 98 }
+    ],
+    "freshnessTimeline": [
+      { "date": "2025-01-15", "latencyMinutes": 12 },
+      { "date": "2025-01-14", "latencyMinutes": 14 },
+      { "date": "2025-01-13", "latencyMinutes": 11 },
+      { "date": "2025-01-12", "latencyMinutes": 15 },
+      { "date": "2025-01-11", "latencyMinutes": 13 },
+      { "date": "2025-01-10", "latencyMinutes": 12 },
+      { "date": "2025-01-09", "latencyMinutes": 14 },
+      { "date": "2025-01-08", "latencyMinutes": 11 },
+      { "date": "2025-01-07", "latencyMinutes": 13 },
+      { "date": "2025-01-06", "latencyMinutes": 12 },
+      { "date": "2025-01-05", "latencyMinutes": 15 },
+      { "date": "2025-01-04", "latencyMinutes": 12 },
+      { "date": "2025-01-03", "latencyMinutes": 14 },
+      { "date": "2025-01-02", "latencyMinutes": 11 },
+      { "date": "2025-01-01", "latencyMinutes": 13 }
+    ],
+    "fieldCompleteness": [
+      { "field": "date", "pctFilled": 100 },
+      { "field": "hour", "pctFilled": 100 },
+      { "field": "ticker", "pctFilled": 100 },
+      { "field": "sentiment_score", "pctFilled": 99.2 },
+      { "field": "sentiment_label", "pctFilled": 99.2 },
+      { "field": "tweet_volume", "pctFilled": 100 },
+      { "field": "engagement_score", "pctFilled": 98.9 },
+      { "field": "confidence", "pctFilled": 99.1 },
+      { "field": "influencer_weight", "pctFilled": 98.5 }
+    ],
+    "sampleRows": [
+      {
+        "date": "2025-01-15",
+        "hour": "14",
+        "ticker": "AAPL",
+        "sentiment_score": "0.62",
+        "sentiment_label": "positive",
+        "tweet_volume": "2847",
+        "engagement_score": "0.71",
+        "confidence": "0.91",
+        "influencer_weight": "0.84"
+      },
+      {
+        "date": "2025-01-15",
+        "hour": "13",
+        "ticker": "MSFT",
+        "sentiment_score": "-0.12",
+        "sentiment_label": "neutral",
+        "tweet_volume": "1523",
+        "engagement_score": "0.38",
+        "confidence": "0.78",
+        "influencer_weight": "0.61"
+      },
+      {
+        "date": "2025-01-15",
+        "hour": "12",
+        "ticker": "GOOGL",
+        "sentiment_score": "0.45",
+        "sentiment_label": "positive",
+        "tweet_volume": "3120",
+        "engagement_score": "0.65",
+        "confidence": "0.87",
+        "influencer_weight": "0.79"
+      },
+      {
+        "date": "2025-01-14",
+        "hour": "16",
+        "ticker": "TSLA",
+        "sentiment_score": "-0.34",
+        "sentiment_label": "negative",
+        "tweet_volume": "4521",
+        "engagement_score": "0.82",
+        "confidence": "0.85",
+        "influencer_weight": "0.91"
+      },
+      {
+        "date": "2025-01-14",
+        "hour": "15",
+        "ticker": "AMZN",
+        "sentiment_score": "0.28",
+        "sentiment_label": "positive",
+        "tweet_volume": "2105",
+        "engagement_score": "0.52",
+        "confidence": "0.81",
+        "influencer_weight": "0.68"
+      }
+    ]
+  },
+  "lineage": [
+    {
+      "stage": "Tweet Collection",
+      "description": "Real-time tweets from public Twitter API filtered for S&P 500 ticker mentions (case-insensitive with validation)",
+      "latency": "Real-time"
+    },
+    {
+      "stage": "NLP Sentiment Analysis",
+      "description": "FinBERT transformer model fine-tuned on financial discourse extracts polarity score and confidence confidence",
+      "latency": "< 5 minutes"
+    },
+    {
+      "stage": "Engagement Scoring",
+      "description": "Aggregates likes, retweets, replies, and quote-tweets; normalized across market hours vs after-hours",
+      "latency": "< 10 minutes"
+    },
+    {
+      "stage": "User Influence Weighting",
+      "description": "Scores user influence based on follower count, historical tweet virality, and verified status",
+      "latency": "< 2 minutes"
+    },
+    {
+      "stage": "Hourly Aggregation",
+      "description": "Rolls up to hourly buckets per ticker; computes weighted averages and volume statistics",
+      "latency": "< 12 minutes"
+    },
+    {
+      "stage": "QA & Validation",
+      "description": "Outlier detection, null-handling, and consistency checks across tickers and time periods",
+      "latency": "< 2 minutes"
+    },
+    {
+      "stage": "Delivery",
+      "description": "Pushes to REST API, WebSocket stream, and S3 bulk export monthly snapshots",
+      "latency": "< 15 minutes from tweet posting"
+    }
+  ],
+  "versionPolicy": {
+    "currentVersion": "2.1.0",
+    "releaseDate": "2024-08-15",
+    "deprecationPolicy": "Major versions supported for 18 months. Minor versions forever. Patch versions for 90 days.",
+    "breakingChanges": "v2.0 (Jan 2024): Changed sentiment_score from -100 to +100 scale to -1 to +1 for consistency with NLP standards. Also added confidence field.",
+    "revisionWindow": "Last 24 hours may be revised as more tweets are collected and sentiment re-analyzed. Data older than 24h is immutable.",
+    "historicalRestated": false
+  },
+  "compliance": {
+    "redistributionAllowed": false,
+    "derivedWorksAllowed": true,
+    "piiPresent": false,
+    "gdprCompliant": true,
+    "regulatoryClassification": "Alternative Data - Non-PII derived sentiment signals from public social media",
+    "auditTrail": true,
+    "dataRetentionPolicy": "All raw data retained for 24 months; aggregated data retained indefinitely for historical analysis"
+  },
+  "backtestGuide": {
+    "engineCompatibility": [
+      "LEAN / QuantConnect",
+      "Zipline",
+      "Backtrader",
+      "Custom Python"
+    ],
+    "sampleBacktest": "import pandas as pd\nfrom datetime import datetime, timedelta\n\n# Load hourly sentiment for backtesting\nstart_date = datetime(2023, 1, 1)\nend_date = datetime(2024, 12, 31)\n\nsent_data = fetch_sentiment(\n    start_date=start_date,\n    end_date=end_date,\n    tickers=['AAPL', 'MSFT', 'GOOGL']\n)\n\n# Simple momentum strategy based on sentiment\nsent_data['signal'] = (sent_data['sentiment_score'] > 0.3).astype(int)\nsent_data['returns'] = sent_data.groupby('ticker')['price'].pct_change()\nsent_data['strategy_returns'] = sent_data['signal'] * sent_data['returns']\n\nprint(f\"Cumulative Return: {(1 + sent_data['strategy_returns']).cumprod().iloc[-1] - 1:.2%}\")\nprint(f\"Sharpe Ratio: {(sent_data['strategy_returns'].mean() / sent_data['strategy_returns'].std()) * 252:.2f}\")",
+    "knownLimitations": [
+      "Sentiment reflects social media discourse, not fundamental factors. High volume doesn't always imply material moves.",
+      "Bot tweets and spam may skew sentiment during low-volume periods for micro-cap stocks or meme stocks.",
+      "After-hours sentiment is less reliable due to lower participation; US-trading-hours tickers are most reliable.",
+      "Insider information and material news breaks typically flow through social media with 2-5 minute delay.",
+      "Negative sentiment bias: retail traders tend to tweet more during losses vs. gains (behavioral asymmetry)."
+    ],
+    "lookbackRequired": "90 days minimum to establish baseline sentiment regime and volatility regime for signal stability",
+    "warmupPeriod": "30 days recommended to allow model to calibrate confidence thresholds and identify anomalies"
+  },
+  "relatedDatasets": ["global-satellite-foot-traffic", "sec-13f-holdings"],
+  "license": "Enterprise Data License. For academic research contact SocialSentiment. Data may not be redistributed or embedded in third-party systems without written permission.",
+  "pointInTime": true,
+  "survivorshipBiasFree": true
+}

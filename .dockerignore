@@ -1,0 +1,11 @@
+node_modules
+.next
+.velite
+.git
+.github
+playwright-report
+test-results
+__tests__
+e2e
+*.md
+!README.md

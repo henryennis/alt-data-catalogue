@@ -1,0 +1,77 @@
+---
+slug: twitter-financial-sentiment
+---
+
+## Overview
+
+Twitter Financial Sentiment captures the real-time sentiment of S&P 500 investor discussions on X (formerly Twitter). Unlike traditional sentiment vendors that focus on news and press releases, this dataset isolates **retail and institutional investor chatter** on social media—a leading indicator for retail flow, momentum reversals, and short-squeeze risk.
+
+Each hourly record combines natural language processing (FinBERT fine-tuned on financial tweets) with market engagement metrics: likes, retweets, quote-tweets, and user influence weighting. The result is a multi-signal picture of what the investing public is *talking about* in real time.
+
+## Signal Construction
+
+The signal construction pipeline processes 100K+ financial tweets per day:
+
+1. **Tweet Collection** — Raw tweets from public X API, filtered for S&P 500 ticker mentions (case-insensitive, validated against CIK database)
+2. **Sentiment Analysis** — FinBERT transformer model trained on financial discourse outputs three scores:
+   - **Polarity** (−1 to +1): negative → positive sentiment
+   - **Confidence** (0 to 1): model certainty in the classification
+   - **Subjectivity**: opinion vs. factual reporting (in advanced tier)
+3. **Engagement Scoring** — Aggregates social signals: likes, retweets, replies, quote tweets. Normalized across market hours vs. after-hours (US trading hours heavily weighted).
+4. **User Influence Weighting** — Each tweet weighted by contributor influence: follower count (log scale), verified status, historical virality rate.
+5. **Hourly Rollup** — Aggregates per-ticker, per-hour. Computes volume-weighted sentiment, variance, and concentration (how many high-influence accounts drove the signal).
+
+<Methodology>
+The FinBERT model is retrained quarterly on 500K+ human-annotated financial tweets to capture evolving sentiment dialect (e.g., "moon 🚀" = bullish, "bagholding" = bearish). Out-of-distribution tweets (e.g., satire, sarcasm, emojis-only) are flagged with lower confidence scores and down-weighted in aggregation. Weekend and after-hours tweets are included but flagged separately—retail traders are more active after-hours; institutions dominate market hours.
+</Methodology>
+
+## Primary Use Cases
+
+<UseCaseList>
+<UseCase title="Momentum & Retail Flow Detection">
+Identify retail-driven momentum and squeeze risk. High positive sentiment + low institutional engagement often precedes mean reversion. High negative sentiment on growth stocks often coincides with capitulation bottoms.
+</UseCase>
+<UseCase title="Earnings Surprise Nowcasting">
+Monitor sentiment shifts in the 24 hours pre- and post-earnings. Unusual divergence between social sentiment and equity prices has historically preceded surprises.
+</UseCase>
+<UseCase title="Sector Rotation Signals">
+Track sector-wide sentiment trends. When tech sentiment diverges from market, rotation risk increases. ESG and clean energy sentiment can signal institutional repositioning weeks ahead of formal announcements.
+</UseCase>
+</UseCaseList>
+
+## Coverage Details
+
+The dataset covers all 500 constituents of the S&P 500 index as of the coverage date. New IPOs are added to coverage within 24 hours of S&P inclusion. Delisted companies are retained for 90 days post-delisting for historical research.
+
+<Callout type="info" title="Geographic Skew">
+The underlying tweet base is 82% US-based accounts, 12% UK/EU, 6% other. Non-US time zones show lower tweet volume during local off-hours but higher sentiment signal-to-noise ratio (fewer bot tweets, more retail conviction).
+</Callout>
+
+## Data Quality Notes
+
+The <FieldRef>sentiment_score</FieldRef> field reflects a 5-point scale bottleneck: the underlying model outputs probabilities, but human labeling during training used discrete categories. Scores between −0.2 and +0.2 should be treated as low-confidence neutral signals.
+
+The <FieldRef>confidence</FieldRef> field (0−1) reflects model calibration: scores below 0.6 indicate the tweet was likely sarcasm, multi-topic, or out-of-distribution. These are still included but should be down-weighted in alpha strategies.
+
+Tweet <FieldRef>tweet_volume</FieldRef> can spike on earnings dates, Fed announcements, and bankruptcy filings. Volume spikes >5σ often indicate fake engagement or coordinated bot campaigns; use <FieldRef>engagement_score</FieldRef> to discriminate.
+
+<Callout type="warning" title="Weekend / After-Hours Gaps">
+On US weekends (Saturday–Sunday), tweet volume drops 70% and is skewed toward Asian traders. This creates predictable gaps in signal for Monday open. All-nighter retail traders dominate after 8pm ET; sentiment is more volatile and less predictive of next-day moves.
+</Callout>
+
+<Callout type="tip" title="Backtest Best Practice">
+When backtesting with this dataset, use the <FieldRef>date</FieldRef> and <FieldRef>hour</FieldRef> fields to ensure proper alignment with market hours. Only use data from 09:30 ET (market open) to 16:00 ET (market close) for directional edge; after-hours sentiment is noisier. Use a 30-minute look-ahead to avoid look-ahead bias when matching sentiment to OHLCV candles.
+</Callout>
+
+## Known Limitations
+
+- **Bot Risk**: ~8-12% of tweets are estimated to be from bots or coordinated campaigns. <FieldRef>engagement_score</FieldRef> helps filter but isn't perfect.
+- **Satire & Sarcasm**: Model accuracy on sarcasm is 71% (vs. 94% on straightforward sentiment). Meme stocks (e.g., GME, AMC) are especially prone to sarcasm misclassification.
+- **Material Information Lag**: Insider leaks and material news often flow through X *before* official channels. Sentiment can lead price by 2−5 minutes but is not a source of MNPI.
+- **Regime Shifts**: Model was trained on 2020−2023 data. 2024 sentiment characteristics have drifted slightly (more emoji usage, fewer formal disclosures). Model will be retrained Q1 2025.
+
+## Version & Support
+
+Current version is **2.1.0** (released Aug 2024). Version 1.x (legacy 0-100 sentiment scale) is deprecated as of Jan 2025. Support for v1.x ends March 2025.
+
+Email support@socialsent.com for SLA questions, custom aggregations, or access to raw tweet metadata (requires separate license).
